@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "259457815318",
+    "project_id": "mindspace-bdd68",
+    "storage_bucket": "mindspace-bdd68.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259457815318:android:dc97dd5ff0aa5b968cb637",
+        "android_client_info": {
+          "package_name": "com.example.mindspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN_mER9R15WAfw8pns7Aj_IOi-LA-8Y40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

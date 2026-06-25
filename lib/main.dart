@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'dart:math' as math;
+import 'screens/onboarding_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MindSpace',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF050A06),
+        fontFamily: 'sans-serif',
+      ),
       home: const SplashScreen(),
     );
   }
 }
 
+// ═══════════════════════════════════════════
+// SPLASH SCREEN
+// ═══════════════════════════════════════════
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -36,15 +51,12 @@ class _SplashScreenState extends State<SplashScreen>
   final _mind  = ['M','i','n','d'];
   final _space = ['S','p','a','c','e'];
 
-  // Logo state - driven by requestAnimationFrame-style ticker
   double _lScale = 0.2;
   double _lRot   = -8.0;
   double _lOp    = 0.0;
   double _gSize  = 60.0;
   double _gOp    = 0.0;
-
-  // Orb offsets driven by bg ticker
-  double _bgV = 0.0;
+  double _bgV    = 0.0;
 
   final _keys = [
     [0.00, 0.2,  -8.0, 0.0],
@@ -63,7 +75,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Background float - 7s loop
     _bgCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 7),
@@ -71,16 +82,14 @@ class _SplashScreenState extends State<SplashScreen>
       setState(() => _bgV = _bgCtrl.value);
     })..repeat(reverse: true);
 
-    // Logo master - 8000ms
     _masterCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 8000),
+      duration: const Duration(milliseconds: 7000),
     )..addListener(_onLogoTick)..forward();
 
-    // Letters: start at 3000ms, total spread 3000ms, 9 letters
     final all = [..._mind, ..._space];
     const dur   = 400;
-    const total = 3000;
+    const total = 1000;
     final step  = (total - dur) ~/ (all.length - 1);
 
     for (int i = 0; i < all.length; i++) {
@@ -97,11 +106,25 @@ class _SplashScreenState extends State<SplashScreen>
       });
     }
 
-    // Tagline at 6300ms
     _tagCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 800));
-    Future.delayed(const Duration(milliseconds: 6300), () {
+    Future.delayed(const Duration(milliseconds: 4400), () {
       if (mounted) _tagCtrl.forward();
+    });
+
+    // Navigate to onboarding after splash
+    Future.delayed(const Duration(milliseconds: 6500), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const OnboardingScreen(),
+            transitionsBuilder: (_, anim, __, child) =>
+                FadeTransition(opacity: anim, child: child),
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+        );
+      }
     });
   }
 
@@ -148,12 +171,11 @@ class _SplashScreenState extends State<SplashScreen>
       opacity: _letterO[i].value,
       child: Transform.translate(
         offset: Offset(0, _letterY[i].value),
-        child: Text(ch,
-            style: TextStyle(
-                fontSize: 44,
-                fontWeight: FontWeight.w500,
-                color: col,
-                height: 1.1)),
+        child: Text(ch, style: TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.w500,
+            color: col,
+            height: 1.1)),
       ),
     ),
   );
@@ -164,18 +186,18 @@ class _SplashScreenState extends State<SplashScreen>
   );
 
   Widget _ring(double size, double op, double scale) =>
-      Transform.scale(scale: scale,
-        child: Container(
-          width: size, height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF52B788).withOpacity(op),
-              width: 0.5,
-            ),
+    Transform.scale(scale: scale,
+      child: Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF52B788).withOpacity(op),
+            width: 0.5,
           ),
         ),
-      );
+      ),
+    );
 
   @override
   Widget build(BuildContext context) {
@@ -186,50 +208,30 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: const Color(0xFF050A06),
       body: Stack(children: [
 
-        // ── Orb 1 - top right (f1: translate -22,22 + scale 1.05) ──
-        Positioned(
-          top:   -100 + v * 22,
-          right:  -80 + v * 15,
-          child: _orb(320, const Color(0xFF0F2E1A)),
-        ),
+        // Background orbs
+        Positioned(top: -100 + v*22, right: -80 + v*15,
+            child: _orb(320, const Color(0xFF0F2E1A))),
+        Positioned(bottom: -60 - v*20, left: -60 + v*15,
+            child: _orb(240, const Color(0xFF081A0D))),
+        Positioned(top: sz.height*0.35 - v*16,
+            left: sz.width*0.05 + v*12,
+            child: Opacity(opacity: 0.6,
+                child: _orb(160, const Color(0xFF1A4A2E)))),
+        Positioned(bottom: sz.height*0.18 + (1-v)*16,
+            right: sz.width*0.05 - (1-v)*12,
+            child: Opacity(opacity: 0.35,
+                child: _orb(90, const Color(0xFF2D6A4F)))),
+        Positioned(top: sz.height*0.2 - v*10,
+            left: sz.width*0.2 + v*8,
+            child: Opacity(opacity: 0.15,
+                child: _orb(50, const Color(0xFF52B788)))),
 
-        // ── Orb 2 - bottom left (f2: translate 22,-22 + scale 1.06) ──
-        Positioned(
-          bottom: -60 - v * 20,
-          left:   -60 + v * 15,
-          child: _orb(240, const Color(0xFF081A0D)),
-        ),
+        // Rings
+        Center(child: _ring(420, 0.06, 1.0 + v*0.04)),
+        Center(child: _ring(310, 0.09, 1.0 + (1-v)*0.04)),
+        Center(child: _ring(200, 0.13, 1.0 + v*0.05)),
 
-        // ── Orb 3 - mid left (f3: translate 12,-16 + scale 1.1) ──
-        Positioned(
-          top:  sz.height * 0.35 - v * 16,
-          left: sz.width  * 0.05 + v * 12,
-          child: Opacity(opacity: 0.6,
-              child: _orb(160, const Color(0xFF1A4A2E))),
-        ),
-
-        // ── Orb 4 - bottom right (f3 reverse) ──
-        Positioned(
-          bottom: sz.height * 0.18 + (1-v) * 16,
-          right:  sz.width  * 0.05 - (1-v) * 12,
-          child: Opacity(opacity: 0.35,
-              child: _orb(90, const Color(0xFF2D6A4F))),
-        ),
-
-        // ── Orb 5 - small top left (f1 delayed) ──
-        Positioned(
-          top:  sz.height * 0.2 - v * 10,
-          left: sz.width  * 0.2 + v * 8,
-          child: Opacity(opacity: 0.15,
-              child: _orb(50, const Color(0xFF52B788))),
-        ),
-
-        // ── Rings (rp: scale pulse) ──
-        Center(child: _ring(420, 0.06, 1.0 + v * 0.04)),
-        Center(child: _ring(310, 0.09, 1.0 + (1-v) * 0.04)),
-        Center(child: _ring(200, 0.13, 1.0 + v * 0.05)),
-
-        // ── Glow ──
+        // Glow
         Center(
           child: Opacity(
             opacity: _gOp,
@@ -243,13 +245,13 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         ),
 
-        // ── Center content ──
+        // Center content
         Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
 
-              // Logo box
+              // Logo
               Opacity(
                 opacity: _lOp,
                 child: Transform.scale(
@@ -263,19 +265,15 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
                           color: const Color(0xFF52B788).withOpacity(0.25),
-                          width: 1,
                         ),
                         boxShadow: [BoxShadow(
                           color: const Color(0xFF52B788).withOpacity(0.2),
-                          blurRadius: 40,
-                          spreadRadius: 8,
+                          blurRadius: 40, spreadRadius: 8,
                         )],
                       ),
-                      child: Center(
-                        child: CustomPaint(
-                          size: const Size(56, 56),
-                          painter: _LogoPainter(),
-                        ),
+                      child: const Icon(
+                        Icons.sentiment_satisfied_rounded,
+                        color: Colors.white, size: 50,
                       ),
                     ),
                   ),
@@ -322,69 +320,4 @@ class _SplashScreenState extends State<SplashScreen>
       ]),
     );
   }
-}
-
-class _LogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width  / 2;
-    final cy = size.height * 0.43;
-    final r  = size.height * 0.214;
-
-    final white = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final green = Paint()
-      ..color = const Color(0xFF52B788)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final dot = Paint()..color = Colors.white;
-
-    // Circle (cx=28, cy=24, r=12 in 56x56 SVG)
-    canvas.drawCircle(Offset(cx, cy), r, white);
-
-    // Wave: M19 24 Q23.5 17 28 24 Q32.5 31 37 24
-    final wave = Path()
-      ..moveTo(cx - r*0.75, cy)
-      ..quadraticBezierTo(cx - r*0.375, cy - r*0.583, cx, cy)
-      ..quadraticBezierTo(cx + r*0.375, cy + r*0.583, cx + r*0.75, cy);
-    canvas.drawPath(wave, green);
-
-    // Eyes (cx=23,cy=20) and (cx=33,cy=20)
-    canvas.drawCircle(Offset(cx - r*0.417, cy - r*0.333), 2.2, dot);
-    canvas.drawCircle(Offset(cx + r*0.417, cy - r*0.333), 2.2, dot);
-
-    // Body lines
-    final body = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    // line x1=28 y1=36 x2=28 y2=44
-    canvas.drawLine(
-      Offset(cx, cy + r * 1.0),
-      Offset(cx, cy + r * 1.667),
-      body,
-    );
-    // line x1=21 y1=41 x2=28 y2=44
-    canvas.drawLine(
-      Offset(cx - r*0.583, cy + r*1.417),
-      Offset(cx, cy + r*1.667),
-      body,
-    );
-    // line x1=35 y1=41 x2=28 y2=44
-    canvas.drawLine(
-      Offset(cx + r*0.583, cy + r*1.417),
-      Offset(cx, cy + r*1.667),
-      body,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
