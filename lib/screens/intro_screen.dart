@@ -16,6 +16,7 @@ class IntroScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Custom logo
                 Container(
                   width: 90,
                   height: 90,
@@ -33,11 +34,10 @@ class IntroScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.sentiment_satisfied_rounded,
-                      color: Colors.white,
-                      size: 48,
+                  child: Center(
+                    child: CustomPaint(
+                      size: const Size(54, 54),
+                      painter: _LogoPainter(),
                     ),
                   ),
                 ),
@@ -191,4 +191,64 @@ class _Badge extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height * 0.43;
+    final r  = size.height * 0.214;
+
+    final white = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+
+    final green = Paint()
+      ..color = const Color(0xFF52B788)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+
+    final dot = Paint()..color = Colors.white;
+
+    // Circle
+    canvas.drawCircle(Offset(cx, cy), r, white);
+
+    // Wave smile
+    final wave = Path()
+      ..moveTo(cx - r * 0.75, cy)
+      ..quadraticBezierTo(
+          cx - r * 0.35, cy - r * 0.6, cx, cy)
+      ..quadraticBezierTo(
+          cx + r * 0.35, cy + r * 0.6, cx + r * 0.75, cy);
+    canvas.drawPath(wave, green);
+
+    // Eyes
+    canvas.drawCircle(
+        Offset(cx - r * 0.42, cy - r * 0.35), 2.2, dot);
+    canvas.drawCircle(
+        Offset(cx + r * 0.42, cy - r * 0.35), 2.2, dot);
+
+    // Body
+    final body = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+        Offset(cx, cy + r),
+        Offset(cx, cy + r * 1.65), body);
+    canvas.drawLine(
+        Offset(cx - r * 0.6, cy + r * 1.4),
+        Offset(cx, cy + r * 1.65), body);
+    canvas.drawLine(
+        Offset(cx + r * 0.6, cy + r * 1.4),
+        Offset(cx, cy + r * 1.65), body);
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
 }
