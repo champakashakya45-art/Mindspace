@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/animated_bg.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -9,14 +8,25 @@ class IntroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedForestBg(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF071A0D),
+              Color(0xFF050E08),
+              Color(0xFF030805),
+            ],
+          ),
+        ),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(28, 36, 28, 36),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Custom logo
+                // Logo
                 Container(
                   width: 90,
                   height: 90,
@@ -85,6 +95,7 @@ class IntroScreen extends StatelessWidget {
                 const Spacer(),
                 Divider(color: Colors.white.withOpacity(0.06)),
                 const SizedBox(height: 16),
+                // Sign in button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -112,6 +123,7 @@ class IntroScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Create account button
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -198,7 +210,7 @@ class _LogoPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height * 0.43;
-    final r  = size.height * 0.214;
+    final r = size.height * 0.214;
 
     final white = Paint()
       ..color = Colors.white
@@ -214,33 +226,24 @@ class _LogoPainter extends CustomPainter {
 
     final dot = Paint()..color = Colors.white;
 
-    // Circle
     canvas.drawCircle(Offset(cx, cy), r, white);
 
-    // Wave smile
     final wave = Path()
       ..moveTo(cx - r * 0.75, cy)
-      ..quadraticBezierTo(
-          cx - r * 0.35, cy - r * 0.6, cx, cy)
-      ..quadraticBezierTo(
-          cx + r * 0.35, cy + r * 0.6, cx + r * 0.75, cy);
+      ..quadraticBezierTo(cx - r * 0.35, cy - r * 0.6, cx, cy)
+      ..quadraticBezierTo(cx + r * 0.35, cy + r * 0.6, cx + r * 0.75, cy);
     canvas.drawPath(wave, green);
 
-    // Eyes
-    canvas.drawCircle(
-        Offset(cx - r * 0.42, cy - r * 0.35), 2.2, dot);
-    canvas.drawCircle(
-        Offset(cx + r * 0.42, cy - r * 0.35), 2.2, dot);
+    canvas.drawCircle(Offset(cx - r * 0.42, cy - r * 0.35), 2.2, dot);
+    canvas.drawCircle(Offset(cx + r * 0.42, cy - r * 0.35), 2.2, dot);
 
-    // Body
     final body = Paint()
       ..color = Colors.white
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
-        Offset(cx, cy + r),
-        Offset(cx, cy + r * 1.65), body);
+        Offset(cx, cy + r), Offset(cx, cy + r * 1.65), body);
     canvas.drawLine(
         Offset(cx - r * 0.6, cy + r * 1.4),
         Offset(cx, cy + r * 1.65), body);

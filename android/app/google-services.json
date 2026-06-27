@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "259457815318",
+    "project_id": "mindspace-bdd68",
+    "storage_bucket": "mindspace-bdd68.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259457815318:android:dc97dd5ff0aa5b968cb637",
+        "android_client_info": {
+          "package_name": "com.example.mindspace"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "259457815318-dm08bfrstm997qsc45ah2rjo2ads0snt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mindspace",
+            "certificate_hash": "3ff634909d2a9fc11c11e384d4410fa70fde7513"
+          }
+        },
+        {
+          "client_id": "259457815318-bav4ua608bupghmjlacm8bsmdh7a0580.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN_mER9R15WAfw8pns7Aj_IOi-LA-8Y40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "259457815318-bav4ua608bupghmjlacm8bsmdh7a0580.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
