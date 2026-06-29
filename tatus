@@ -1,0 +1,20 @@
+[33mcommit 38b35908a9887b5855e7ae4cf7040fd4cab07469[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Champaka Shakya <champakashakya45@gmail.com>
+Date:   Mon Jun 29 19:43:08 2026 +0530
+
+    feat: Journal PDF export, search, filter, insights trend analysis, calendar navigation
+
+android/app/src/main/AndroidManifest.xml
+lib/screens/crisis_support_screen.dart
+lib/screens/history_screen.dart
+lib/screens/home_screen.dart
+lib/screens/insights_screen.dart
+lib/screens/journal_screen.dart
+lib/screens/profile_screen.dart
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+macos/Flutter/GeneratedPluginRegistrant.swift
+pubspec.lock
+pubspec.yaml
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
