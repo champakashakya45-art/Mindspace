@@ -10,6 +10,7 @@ import 'dart:convert';
 import '../main.dart' show themeNotifier, setTheme;
 import '../services/notification_service.dart';
 import 'intro_screen.dart';
+import 'crisis_support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -520,22 +521,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
 
                 // APP INFO
-                _sectionTitle('APP INFO'),
-                const SizedBox(height: 8),
-                _infoCard([
-                  _row(Icons.info_outline_rounded,
-                      const Color(0xFFF0FDF4), const Color(0xFF22C55E),
-                      'Version', '1.0.0'),
-                  _row(Icons.shield_outlined,
-                      const Color(0xFFFFF1F2), const Color(0xFFEF4444),
-                      'Privacy Policy', '',
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) =>
-                              _PrivacyPolicyScreen(isDark: _isDark)))),
-                  _row(Icons.favorite_border_rounded,
-                      const Color(0xFFFFF7ED), const Color(0xFFF97316),
-                      'Made with', 'Flutter + Firebase'),
-                ]),
+_sectionTitle('APP INFO'),
+const SizedBox(height: 8),
+_infoCard([
+  _row(Icons.info_outline_rounded, const Color(0xFFF0FDF4),
+      const Color(0xFF22C55E), 'Version', '1.0.0'),
+  _row(Icons.shield_outlined, const Color(0xFFFFF1F2),
+      const Color(0xFFEF4444), 'Privacy Policy', '',
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) =>
+              _PrivacyPolicyScreen(isDark: _isDark)))),
+  _row(Icons.health_and_safety_outlined, const Color(0xFFFFF1F2),
+      const Color(0xFFEF4444), 'Crisis Support', '',
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) =>
+              const CrisisSupportScreen()))),
+  _row(Icons.favorite_border_rounded, const Color(0xFFFFF7ED),
+      const Color(0xFFF97316), 'Made with', 'Flutter + Firebase'),
+]),
                 const SizedBox(height: 20),
 
                 // DANGER ZONE

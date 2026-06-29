@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _totalLogs     = 0;
   int _totalJournals = 0;
   List<Map<String, dynamic>> _recentJournals = [];
+  String? _photoUrl;
+  DateTime _calMonth = DateTime.now();
 
   final _moods = [
     {'emoji': '😢', 'label': 'Awful',   'val': 1},
@@ -55,7 +57,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _isDark = themeNotifier.value;
+    _isDark   = themeNotifier.value;
+    _photoUrl = FirebaseAuth.instance.currentUser?.photoURL;
     themeNotifier.addListener(_onThemeChange);
     _loadAllData();
   }
@@ -100,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .limit(5)
           .get();
 
+      // Calendar - selected month
       final calMap = <int, int>{};
       for (final doc in moodsSnap.docs) {
         final data = doc.data();
@@ -107,7 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (date == null) continue;
         try {
           final d = DateTime.parse(date);
-          if (d.month == now.month && d.year == now.year) {
+          if (d.month == _calMonth.month &&
+              d.year  == _calMonth.year) {
             calMap[d.day] = (data['mood'] as int?) ?? 0;
           }
         } catch (_) {}
@@ -167,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _totalJournals  = allJournals.count ?? 0;
           _moodLogged     = moodLogged;
           _recentJournals = recentJournals;
+          _photoUrl       = _auth.currentUser?.photoURL;
           _loading        = false;
         });
       }
@@ -251,11 +257,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: Column(children: [
-                      _buildCalendar(now),
+                      _buildQuote(),
+                      const SizedBox(height: 10),
+                      _buildCalendar(),
                       const SizedBox(height: 10),
                       _buildMoodCard(),
                       const SizedBox(height: 10),
                       _buildStreaks(),
+                      const SizedBox(height: 10),
+                      _buildWeeklySummary(),
                       const SizedBox(height: 10),
                       _buildChart(),
                       const SizedBox(height: 10),
@@ -270,6 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── HEADER ──
   Widget _buildHeader(String greeting, String name) {
     return Container(
       decoration: BoxDecoration(
@@ -297,15 +308,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white)),
               ],
             )),
-            _headerBtn(
-              icon: _isDark
-                  ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-              onTap: () => setTheme(!_isDark),
-            ),
-            const SizedBox(width: 8),
-            _headerBtn(
-              icon: Icons.person_rounded,
-              onTap: _showSignOutDialog,
+            GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(
+                      builder: (_) => const ProfileScreen()))
+                  .then((_) => _loadAllData()),
+              child: Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5),
+                      width: 2)),
+                child: ClipOval(
+                  child: _photoUrl != null && _photoUrl!.isNotEmpty
+                      ? Image.network(_photoUrl!,
+                          fit: BoxFit.cover, width: 40, height: 40,
+                          errorBuilder: (_, __, ___) =>
+                              _avatarFallback(name))
+                      : _avatarFallback(name),
+                ),
+              ),
             ),
           ]),
         ),
@@ -313,52 +336,156 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _headerBtn({required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 34, height: 34,
+  Widget _avatarFallback(String name) {
+    return Container(
+      width: 40, height: 40,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF2D6A4F), Color(0xFF52B788)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight)),
+      child: Center(child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : 'U',
+        style: const TextStyle(fontSize: 16,
+            fontWeight: FontWeight.w700, color: Colors.white))),
+    );
+  }
+
+  // ── QUOTE ──
+  Widget _buildQuote() {
+    final quotes = [
+      'Every day is a new beginning. 🌱',
+      'You are stronger than you think. 💪',
+      'Small steps lead to big changes. 👣',
+      'Be kind to yourself today. 💚',
+      'Progress, not perfection. ✨',
+      'Your mental health matters. 🌿',
+      'Breathe. You\'ve got this. 🧘',
+      'One step at a time. 🚶',
+      'Healing is not linear. 💙',
+      'You matter more than you know. 🌟',
+    ];
+    final quote = quotes[DateTime.now().day % quotes.length];
+    return _card(child: Row(children: [
+      Container(width: 3, height: 44,
+          decoration: BoxDecoration(
+              color: const Color(0xFF52B788),
+              borderRadius: BorderRadius.circular(2))),
+      const SizedBox(width: 12),
+      Expanded(child: Text('"$quote"',
+          style: TextStyle(fontSize: 12,
+              color: _txtMain, fontStyle: FontStyle.italic,
+              height: 1.5))),
+      const SizedBox(width: 8),
+      const Text('💚', style: TextStyle(fontSize: 20)),
+    ]));
+  }
+
+  // ── WEEKLY SUMMARY ──
+  Widget _buildWeeklySummary() {
+    final nonZero = _weekMoods.where((m) => m > 0).toList();
+    if (nonZero.isEmpty) return const SizedBox();
+
+    final moodLabels = ['','Awful','Bad','Okay','Good','Amazing'];
+    final moodEmojis = ['','😢','😕','😊','😄','🤩'];
+    final moodColors = [
+      Colors.transparent,
+      const Color(0xFFEF4444), const Color(0xFFF97316),
+      const Color(0xFFFFD93D), const Color(0xFF52B788),
+      const Color(0xFF06D6A0),
+    ];
+
+    final counts = <int,int>{};
+    for (final m in nonZero) counts[m] = (counts[m] ?? 0) + 1;
+    final topMood = counts.entries
+        .reduce((a, b) => a.value > b.value ? a : b).key;
+    final avg = nonZero.reduce((a,b) => a+b) / nonZero.length;
+
+    return _card(child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+      Row(children: [
+        const Text('📊', style: TextStyle(fontSize: 16)),
+        const SizedBox(width: 8),
+        Text('This Week\'s Mood', style: TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w700,
+            color: _txtMain)),
+      ]),
+      const SizedBox(height: 10),
+      Container(
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.15),
+          color: moodColors[topMood].withOpacity(
+              _isDark ? 0.12 : 0.08),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: Colors.white.withOpacity(0.25), width: 0.5)),
-        child: Icon(icon, color: Colors.white, size: 17),
+              color: moodColors[topMood].withOpacity(0.3),
+              width: 0.5)),
+        child: Row(children: [
+          Text(moodEmojis[topMood],
+              style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            Text('This week you felt mostly',
+                style: TextStyle(fontSize: 11, color: _txtSub)),
+            Text(moodLabels[topMood], style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w700,
+                color: moodColors[topMood])),
+          ])),
+          Column(crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+            Text('Avg', style: TextStyle(fontSize: 9, color: _txtSub)),
+            Text(avg.toStringAsFixed(1), style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w800,
+                color: _txtMain)),
+            Text('/ 5.0', style: TextStyle(
+                fontSize: 9, color: _txtSub)),
+          ]),
+        ]),
       ),
-    );
+    ]));
   }
 
-  void _showSignOutDialog() {
-    showDialog(context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: _cardBg,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
-        title: Text('Sign out?', style: TextStyle(
-            color: _txtMain, fontWeight: FontWeight.w700)),
-        content: Text('Are you sure you want to sign out?',
-            style: TextStyle(color: _txtSub)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: _txtSub))),
-          TextButton(
-            onPressed: () { Navigator.pop(context); _signOut(); },
-            child: const Text('Sign out', style: TextStyle(
-                color: Color(0xFFEF4444),
-                fontWeight: FontWeight.w600))),
-        ],
-      ),
-    );
-  }
+  // ── CALENDAR ──
+  Widget _buildCalendar() {
+    final now = DateTime.now();
+    final isCurrentMonth = _calMonth.month == now.month &&
+        _calMonth.year == now.year;
 
-  Widget _buildCalendar(DateTime now) {
     return _card(child: Column(children: [
       Row(children: [
-        Text('${_monthName(now.month)} ${now.year}',
+        Text('${_monthName(_calMonth.month)} ${_calMonth.year}',
             style: TextStyle(fontSize: 14,
                 fontWeight: FontWeight.w700, color: _txtMain)),
         const Spacer(),
-        _calNav('‹'), const SizedBox(width: 4), _calNav('›'),
+        // Prev month
+        GestureDetector(
+          onTap: () {
+            setState(() => _calMonth =
+                DateTime(_calMonth.year, _calMonth.month - 1));
+            _loadAllData();
+          },
+          child: _calNavBtn('‹')),
+        const SizedBox(width: 4),
+        // Next month - future block
+       GestureDetector(
+  onTap: () {
+    final now2 = DateTime.now();
+    final next = DateTime(
+        _calMonth.year, _calMonth.month + 1);
+    final nowMonth  = DateTime(now2.year, now2.month);
+    final nextMonth = DateTime(next.year, next.month);
+    if (nextMonth.year < nowMonth.year ||
+        (nextMonth.year == nowMonth.year &&
+         nextMonth.month <= nowMonth.month)) {
+      setState(() => _calMonth = next);
+      _loadAllData();
+    }
+  },
+  child: _calNavBtn('›',
+      disabled: isCurrentMonth)),
       ]),
       const SizedBox(height: 10),
       Row(children: ['Su','Mo','Tu','We','Th','Fr','Sa']
@@ -368,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w600, color: _txtSub))))
           .toList()),
       const SizedBox(height: 4),
-      _buildCalGrid(now),
+      _buildCalGrid(),
       const SizedBox(height: 10),
       Row(children: [
         {'c': const Color(0xFFEF4444), 'l': 'Awful'},
@@ -392,36 +519,45 @@ class _HomeScreenState extends State<HomeScreen> {
     ]));
   }
 
-  Widget _calNav(String label) {
-    return GestureDetector(
-      child: Container(
-        width: 26, height: 26,
-        decoration: BoxDecoration(
-          color: _isDark
-              ? const Color(0xFF52B788).withOpacity(0.1)
-              : const Color(0xFFE8F5EE),
-          borderRadius: BorderRadius.circular(8),
-          border: _isDark ? Border.all(
-              color: const Color(0xFF52B788).withOpacity(0.2),
-              width: 0.5) : null),
-        child: Center(child: Text(label, style: const TextStyle(
-            color: Color(0xFF2D6A4F),
-            fontWeight: FontWeight.w700, fontSize: 14))),
-      ),
+  Widget _calNavBtn(String label, {bool disabled = false}) {
+    return Container(
+      width: 26, height: 26,
+      decoration: BoxDecoration(
+        color: disabled
+            ? (_isDark
+                ? Colors.white.withOpacity(0.03)
+                : const Color(0xFFF0F0F0))
+            : (_isDark
+                ? const Color(0xFF52B788).withOpacity(0.1)
+                : const Color(0xFFE8F5EE)),
+        borderRadius: BorderRadius.circular(8),
+        border: _isDark ? Border.all(
+            color: const Color(0xFF52B788).withOpacity(
+                disabled ? 0.05 : 0.2),
+            width: 0.5) : null),
+      child: Center(child: Text(label, style: TextStyle(
+          color: disabled
+              ? _txtSub.withOpacity(0.3)
+              : const Color(0xFF2D6A4F),
+          fontWeight: FontWeight.w700, fontSize: 14))),
     );
   }
 
-  Widget _buildCalGrid(DateTime now) {
-    final firstDay    = DateTime(now.year, now.month, 1);
+  Widget _buildCalGrid() {
+    final now         = DateTime.now();
+    final firstDay    = DateTime(_calMonth.year, _calMonth.month, 1);
     final startWD     = firstDay.weekday % 7;
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final cells       = <Widget>[];
+    final daysInMonth = DateTime(
+        _calMonth.year, _calMonth.month + 1, 0).day;
+    final cells = <Widget>[];
 
     for (int i = 0; i < startWD; i++) cells.add(const SizedBox());
 
     for (int d = 1; d <= daysInMonth; d++) {
-      final isToday = d == now.day;
-      final mood    = _calMoods[d] ?? 0;
+      final isToday = d == now.day &&
+          _calMonth.month == now.month &&
+          _calMonth.year  == now.year;
+      final mood = _calMoods[d] ?? 0;
       cells.add(Container(
         margin: const EdgeInsets.all(1),
         decoration: BoxDecoration(
@@ -459,6 +595,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── MOOD CARD ──
   Widget _buildMoodCard() {
     return Container(
       decoration: BoxDecoration(
@@ -481,16 +618,19 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(children: [
         Row(children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             const Text('How are you feeling?', style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700,
                 color: Colors.white)),
             Text('Log your mood for today', style: TextStyle(
-                fontSize: 10, color: Colors.white.withOpacity(0.6))),
+                fontSize: 10,
+                color: Colors.white.withOpacity(0.6))),
           ]),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
               color: _isDark
                   ? const Color(0xFF52B788).withOpacity(0.15)
@@ -519,15 +659,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Mood logged today! ${_selectedMood >= 0 ? _moods[_selectedMood]['emoji'] : '✓'}',
                     style: const TextStyle(color: Colors.white,
-                        fontSize: 14, fontWeight: FontWeight.w600)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
                 ]))
             : Column(children: [
-                Row(children: List.generate(_moods.length, (i) => Expanded(
+                Row(children: List.generate(_moods.length,
+                    (i) => Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _selectedMood = i),
+                    onTap: () =>
+                        setState(() => _selectedMood = i),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8),
                       decoration: BoxDecoration(
                         color: _selectedMood == i
                             ? Colors.white.withOpacity(0.25)
@@ -583,7 +727,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? const Color(0xFF2D6A4F) : Colors.white,
                       foregroundColor: _isDark
                           ? Colors.white : const Color(0xFF2D6A4F),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       elevation: 0),
@@ -602,6 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── STREAKS ──
   Widget _buildStreaks() {
     return Row(children: [
       _streakCard('$_streak 🔥', 'Day streak',
@@ -635,6 +781,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── CHART ──
   Widget _buildChart() {
     final moodColors = [
       const Color(0xFFEF4444), const Color(0xFFF97316),
@@ -663,7 +810,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: FractionallySizedBox(
                     heightFactor: m == 0 ? 0.05 : m / 5,
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 3),
                       decoration: BoxDecoration(
                         color: m == 0
                             ? (_isDark
@@ -686,6 +834,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]));
   }
 
+  // ── JOURNAL ──
   Widget _buildJournal() {
     return _card(child: Column(children: [
       Row(children: [
@@ -795,6 +944,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]));
   }
 
+  // ── BOTTOM NAV ──
   Widget _buildBottomNav() {
     final items = [
       ['Home',     Icons.home_rounded],
@@ -830,7 +980,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (_) => const HistoryScreen()));
                   } else if (i == 4) {
                     Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => const ProfileScreen()));
+                        builder: (_) => const ProfileScreen()))
+                        .then((_) => _loadAllData());
                   }
                 },
                 child: Column(
