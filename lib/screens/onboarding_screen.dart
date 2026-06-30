@@ -8,8 +8,12 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
   int _cur = 0;
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
 
   final List<Map<String, String>> _slides = [
     {
@@ -32,9 +36,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnim = CurvedAnimation(
+        parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+        parent: _animCtrl, curve: Curves.easeOutCubic));
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
   void _next() {
     if (_cur < 2) {
       setState(() => _cur++);
+      _animCtrl.reset();
+      _animCtrl.forward();
     } else {
       Navigator.pushReplacement(
         context,
@@ -63,11 +92,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  slide['img']!,
-                  fit: BoxFit.cover,
-                  color: const Color(0xFF0A1A0D).withOpacity(0.45),
-                  colorBlendMode: BlendMode.multiply,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: Image.asset(
+                    slide['img']!,
+                    key: ValueKey(slide['img']),
+                    fit: BoxFit.cover,
+                    color: const Color(0xFF0A1A0D).withOpacity(0.45),
+                    colorBlendMode: BlendMode.multiply,
+                  ),
                 ),
                 // Bottom fade
                 Container(
@@ -147,31 +180,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    slide['title']!,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFE8F5EE),
-                      height: 1.22,
-                    ),
-                  ),
-                  Text(
-                    slide['highlight']!,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF52B788),
-                      height: 1.22,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    slide['sub']!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.38),
-                      height: 1.75,
+                  FadeTransition(
+                    opacity: _fadeAnim,
+                    child: SlideTransition(
+                      position: _slideAnim,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            slide['title']!,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFE8F5EE),
+                              height: 1.22,
+                            ),
+                          ),
+                          Text(
+                            slide['highlight']!,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF52B788),
+                              height: 1.22,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            slide['sub']!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withOpacity(0.38),
+                              height: 1.75,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),
