@@ -498,22 +498,60 @@ class _LogoPainter extends CustomPainter {
 class _GooglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final r = size.width / 2;
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), -1.4, 4.5, false,
-        Paint()..color = const Color(0xFF4285F4)
-          ..style = PaintingStyle.stroke..strokeWidth = 3);
-    canvas.drawRect(Rect.fromLTWH(c.dx, c.dy-2, r*0.95, 4),
-        Paint()..color = const Color(0xFF4285F4));
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), -0.1, 1.0, false,
-        Paint()..color = const Color(0xFF34A853)
-          ..style = PaintingStyle.stroke..strokeWidth = 3);
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), 3.3, 1.1, false,
-        Paint()..color = const Color(0xFFFBBC05)
-          ..style = PaintingStyle.stroke..strokeWidth = 3);
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), 2.1, 1.2, false,
-        Paint()..color = const Color(0xFFEA4335)
-          ..style = PaintingStyle.stroke..strokeWidth = 3);
+    final w = size.width;
+    final h = size.height;
+
+    final bluePaint = Paint()..color = const Color(0xFF4285F4);
+    final bluePath = Path()
+      ..moveTo(w * 0.99, h * 0.51)
+      ..cubicTo(w * 0.99, h * 0.47, w * 0.985, h * 0.43, w * 0.975, h * 0.39)
+      ..lineTo(w * 0.5, h * 0.39)
+      ..lineTo(w * 0.5, h * 0.62)
+      ..lineTo(w * 0.78, h * 0.62)
+      ..cubicTo(w * 0.765, h * 0.70, w * 0.72, h * 0.765, w * 0.65, h * 0.81)
+      ..lineTo(w * 0.65, h * 0.965)
+      ..lineTo(w * 0.855, h * 0.965)
+      ..cubicTo(w * 0.955, h * 0.875, w * 0.99, h * 0.705, w * 0.99, h * 0.51)
+      ..close();
+    canvas.drawPath(bluePath, bluePaint);
+
+    final greenPaint = Paint()..color = const Color(0xFF34A853);
+    final greenPath = Path()
+      ..moveTo(w * 0.5, h * 1.0)
+      ..cubicTo(w * 0.635, h * 1.0, w * 0.75, h * 0.955, w * 0.835, h * 0.875)
+      ..lineTo(w * 0.65, h * 0.81)
+      ..cubicTo(w * 0.595, h * 0.845, w * 0.525, h * 0.865, w * 0.5, h * 0.865)
+      ..cubicTo(w * 0.345, h * 0.865, w * 0.215, h * 0.76, w * 0.165, h * 0.62)
+      ..lineTo(w * -0.035, h * 0.62)
+      ..lineTo(w * -0.035, h * 0.78)
+      ..cubicTo(w * 0.065, h * 0.93, w * 0.27, h * 1.0, w * 0.5, h * 1.0)
+      ..close();
+    canvas.drawPath(greenPath, greenPaint);
+
+    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
+    final yellowPath = Path()
+      ..moveTo(w * 0.165, h * 0.62)
+      ..cubicTo(w * 0.15, h * 0.575, w * 0.142, h * 0.527, w * 0.142, h * 0.5)
+      ..cubicTo(w * 0.142, h * 0.473, w * 0.15, h * 0.425, w * 0.165, h * 0.38)
+      ..lineTo(w * 0.165, h * 0.22)
+      ..lineTo(w * -0.035, h * 0.22)
+      ..cubicTo(w * -0.085, h * 0.32, w * -0.115, h * 0.405, w * -0.115, h * 0.5)
+      ..cubicTo(w * -0.115, h * 0.595, w * -0.085, h * 0.68, w * -0.035, h * 0.78)
+      ..lineTo(w * 0.165, h * 0.62)
+      ..close();
+    canvas.drawPath(yellowPath, yellowPaint);
+
+    final redPaint = Paint()..color = const Color(0xFFEA4335);
+    final redPath = Path()
+      ..moveTo(w * 0.5, h * 0.135)
+      ..cubicTo(w * 0.578, h * 0.135, w * 0.648, h * 0.163, w * 0.703, h * 0.215)
+      ..lineTo(w * 0.84, h * 0.078)
+      ..cubicTo(w * 0.75, h * -0.005, w * 0.635, h * -0.05, w * 0.5, h * -0.05)
+      ..cubicTo(w * 0.27, h * -0.05, w * 0.065, h * 0.07, w * -0.035, h * 0.22)
+      ..lineTo(w * 0.165, h * 0.38)
+      ..cubicTo(w * 0.215, h * 0.24, w * 0.345, h * 0.135, w * 0.5, h * 0.135)
+      ..close();
+    canvas.drawPath(redPath, redPaint);
   }
   @override
   bool shouldRepaint(_) => false;
